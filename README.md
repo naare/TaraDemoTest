@@ -33,7 +33,7 @@ Parameetrite kirjeldus:
 | test.tara.loginUrl | /login | TARA sisse logimise otspunkt. |
 | test.tara.configurationUrl | /oidc/.well-known/openid-configuration | TARA konfiguratsiooni otspunkt. |
 
-4. Käivita testid:
+4. Käivita test (kasutades profiiliga määratletud või vaikeväärtustega parameetreid):
 
 `./mvnw clean install`
 
@@ -41,12 +41,4 @@ Testidele parameetrite ette andmine käivitamisel:
 
 `./mvnw clean install -Dtest.tara.targetUrl=http://localhost:1881`
 
-5. Kontrolli testide tulemusi
-
-a) Testid väljastavad raporti ja logi jooksvalt käivituskonsoolis
-
-b) Surefire pistikprogramm väljastab tulemuste raporti ../target/surefire-reports kausta. Võimalik on genereerida ka html kujul koondraport. Selleks käivitada peale testide käivitamist käsk:
-
-`./mvnw surefire-report:report-only`
-
-Html raport on leitav ../target/site/ kaustast.
+Test väljastavab konsooli RelayingParty-sse sisse tulevad ja välja minevad HTTP päringud

@@ -172,6 +172,10 @@ public abstract class TestsBase {
                 .extract().response()
                 .getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
 
+        System.out.println("\n----------------------------- ");
+        System.out.println("User is authenticating, please wait");
+        System.out.println("-----------------------------\n ");
+
         String execution2 = given()
                 .filter(cookieFilter).relaxedHTTPSValidation()
                 .formParam("execution", execution)
@@ -200,7 +204,9 @@ public abstract class TestsBase {
                 .extract().response()
                 .getHeader("location");
 
-        // This is HTTP GET made by the TARA to RelayingParty returnUrl
+        // This returns browser redirect command to RelayingParty returnUrl. This is not actually fullfilled in this test, but needs to be handled in real application.
+        System.out.println("\n----------------------------- ");
+        System.out.println("Start of status for browser redirect to returnUrl\n");
         String location4 = given()
                 .filter(cookieFilter)
                 .relaxedHTTPSValidation()
@@ -209,8 +215,11 @@ public abstract class TestsBase {
                 .urlEncodingEnabled(false)
                 .get(location3)
                 .then()
+                .log().all()
                 .extract().response()
                 .getHeader("Location");
+        System.out.println("\nEnd of browser redirect");
+        System.out.println("-----------------------------\n ");
         return location4;
     }
 }

@@ -32,6 +32,8 @@ public class MobileIdTest extends TestsBase {
         String sha256NonceBase64 = Base64.getEncoder().encodeToString(DigestUtils.sha256(nonce));
 
         // RelayingParty sends out HTTP GET to authorize url for initiazing authorization flow
+        System.out.println("\n----------------------------- ");
+        System.out.println("Start of HTTP GET to authorize url\n");
         String location = given()
                 .filter(cookieFilter)
                 .queryParam("scope", "openid")
@@ -48,6 +50,8 @@ public class MobileIdTest extends TestsBase {
                 .log().all()
                 .extract().response()
                 .getHeader("location");
+        System.out.println("\nEnd of HTTP GET to authorize url");
+        System.out.println("-----------------------------\n ");
 
         // This simulates the user actions in TARA, including HTTP GET to RelayigParty return URL.
         String returnedUrlWithCode = authenticateAndGetAuthorizationCode(location, "60001019906", "00000766");
@@ -56,6 +60,8 @@ public class MobileIdTest extends TestsBase {
         String authorizationCode = getCode(returnedUrlWithCode);
 
         // RelayingParty sends out HTTP POST to get a token
+        System.out.println("\n----------------------------- ");
+        System.out.println("Start of HTTP POST to token url\n");
         Response response = given()
                 .queryParam("grant_type", "authorization_code")
                 .queryParam("code", authorizationCode)
@@ -68,6 +74,8 @@ public class MobileIdTest extends TestsBase {
                 .then()
                 .log().all()
                 .extract().response();
+        System.out.println("\nEnd of HTTP POST to token url");
+        System.out.println("-----------------------------\n ");
 
         // Extract idToken from response
         String idToken = response.getBody().jsonPath().getString("id_token");
