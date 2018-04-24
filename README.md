@@ -9,11 +9,13 @@
 
 1. Hangi TARA testid:
 
- `git clone https://github.com/e-gov/TARA-Server-Test.git`
+ `git clone https://github.com/naare/TaraDemoTest.git`
 
 2. Seadista testid vastavaks testitava TARA rakenduse otspunktidele. Selleks on kaks võimalust:
 
-a) Võimalik on ette anda kahe erineva "profiili" properties faile "dev" ja "test" - vastavad properties failid [application-dev.properties](https://github.com/e-gov/TARA-Server-Test/blob/master/src/test/resources/application-dev.properties) ja [application-test.properties](https://github.com/e-gov/TARA-Server-Test/blob/master/src/test/resources/application-test.properties). Vaikeväärtusena on kasutusel profiil "dev", kuid seda on võimalik käivitamisel muuta parameetriga. Testide vaikeväärtused on seadistatud [application.properties](https://github.com/e-gov/TARA-Server-Test/blob/master/src/test/resources/application.properties) failis.
+a) Võimalik on ette anda kahe erineva "profiili" properties faile "dev" ja "test" - vastavad properties failid [application-dev.properties](https://github.com/naare/TaraDemoTest/blob/master/src/test/resources/application-dev.properties) ja [application-test.properties](https://github.com/naare/TaraDemoTest/blob/master/src/test/resources/application-test.properties). Vaikeväärtusena on kasutusel profiil "dev", kuid seda on võimalik käivitamisel muuta parameetriga. Testide vaikeväärtused on seadistatud [application.properties](https://github.com/naare/TaraDemoTest/blob/master/src/test/resources/application.properties) failis.
+
+ `-Dspring.profiles.active=test`
 
 b) Andes vastavad parameetrid ette testide käivitamisel (kirjeldus testide käivitamise punktis)
 

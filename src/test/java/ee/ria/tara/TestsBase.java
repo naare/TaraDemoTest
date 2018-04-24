@@ -52,7 +52,7 @@ public abstract class TestsBase {
     protected String tokenIssuer;
     public CookieFilter cookieFilter;
     protected String state;
-    protected String nonce;
+    protected String nonce = null;
 
     @Before
     public void setUp() throws IOException, ParseException {
@@ -69,11 +69,9 @@ public abstract class TestsBase {
 
     private String getIssuer(String url) {
         return given()
-//                .log().all()
                 .when()
                 .get(url)
                 .then()
-//                .log().all()
                 .extract().response().getBody().jsonPath().getString("issuer");
     }
 
@@ -94,46 +92,48 @@ public abstract class TestsBase {
         }
     }
 
-    protected Boolean isTokenSignatureValid(SignedJWT signedJWT) throws JOSEException {
-        List<JWK> matches = new JWKSelector(new JWKMatcher.Builder()
-                .keyType(KeyType.RSA)
-                .build())
-                .select(jwkSet);
+    protected void validateSignature(SignedJWT signedJWT) throws JOSEException {
 
-        RSAKey rsaKey = (RSAKey) matches.get(0);
+        RSAKey rsaKey = (RSAKey) jwkSet.getKeys().get(0);
 
         JWSVerifier verifier = new RSASSAVerifier(rsaKey);
-        return signedJWT.verify(verifier);
+        signedJWT.verify(verifier);
     }
 
     protected SignedJWT verifyTokenAndReturnSignedJwtObject(String token) throws ParseException, JOSEException {
         SignedJWT signedJWT =  SignedJWT.parse(token);
-        if (isTokenSignatureValid(signedJWT)) {
-            if (signedJWT.getJWTClaimsSet().getAudience().get(0).equals(testTaraProperties.getClientId())) {
-                if (signedJWT.getJWTClaimsSet().getIssuer().equals(tokenIssuer)) {
-                    Date date = new Date();
-                    if (date.after(signedJWT.getJWTClaimsSet().getNotBeforeTime()) && date.before(signedJWT.getJWTClaimsSet().getExpirationTime())) {
-                        if (signedJWT.getJWTClaimsSet().getClaim("nonce").equals(Base64.getEncoder().encodeToString(DigestUtils.sha256(nonce)))) {
-                            return signedJWT;
-                        }
-                        else {
-                            throw new RuntimeException("Calculated nonce do not match the received one!");
-                        }
-                    }
-                    else {
-                        throw new RuntimeException("Token validity period is not valid! current: " + date + " nbf: "+signedJWT.getJWTClaimsSet().getNotBeforeTime()+" exp: "+signedJWT.getJWTClaimsSet().getExpirationTime());
-                    }
-                }
-                else {
-                    throw new RuntimeException("Token Issuer is not valid! Expected: "+tokenIssuer+" actual: "+signedJWT.getJWTClaimsSet().getIssuer());
-                }
-            }
-            else {
-                throw new RuntimeException("Token Audience is not valid! Expected: "+testTaraProperties.getClientId()+" actual: "+signedJWT.getJWTClaimsSet().getAudience().get(0));
-            }
+        validateSignature(signedJWT);
+        verifyAudience(signedJWT);
+        verifyIssuer(signedJWT);
+        verifyTimes(signedJWT);
+        verifyNonce(signedJWT);
+        return signedJWT;
+    }
+
+    private void verifyAudience(SignedJWT signedJWT) throws ParseException {
+        if (!signedJWT.getJWTClaimsSet().getAudience().get(0).equals(testTaraProperties.getClientId())) {
+            throw new RuntimeException("Token Audience is not valid! Expected: "+testTaraProperties.getClientId()+" actual: "+signedJWT.getJWTClaimsSet().getAudience().get(0));
         }
-        else {
-            throw new RuntimeException("Token Signature is not valid!");
+    }
+
+    private void verifyIssuer(SignedJWT signedJWT) throws ParseException {
+        if (!signedJWT.getJWTClaimsSet().getIssuer().equals(tokenIssuer)) {
+            throw new RuntimeException("Token Issuer is not valid! Expected: "+tokenIssuer+" actual: "+signedJWT.getJWTClaimsSet().getIssuer());
+        }
+    }
+
+    private void verifyTimes(SignedJWT signedJWT) throws ParseException {
+        Date date = new Date();
+        if (!date.after(signedJWT.getJWTClaimsSet().getNotBeforeTime()) && date.before(signedJWT.getJWTClaimsSet().getExpirationTime())) {
+            throw new RuntimeException("Token validity period is not valid! current: " + date + " nbf: "+signedJWT.getJWTClaimsSet().getNotBeforeTime()+" exp: "+signedJWT.getJWTClaimsSet().getExpirationTime());
+        }
+    }
+
+    private void verifyNonce(SignedJWT signedJWT) throws ParseException {
+        if (nonce != null) {
+            if (!signedJWT.getJWTClaimsSet().getClaim("nonce").equals(Base64.getEncoder().encodeToString(DigestUtils.sha256(nonce)))) {
+                throw new RuntimeException("Calculated nonce do not match the received one!");
+            }
         }
     }
 
@@ -149,11 +149,9 @@ public abstract class TestsBase {
                     .formParam("_eventId", "check")
                     .queryParam("client_id", testTaraProperties.getClientId())
                     .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
-//                .log().all()
                     .when()
                     .post(testTaraProperties.getLoginUrl())
                     .then()
-//                .log().all()
                     .extract().response();
             if (response.statusCode() == 302) {
                 return response.getHeader("location");
@@ -169,10 +167,8 @@ public abstract class TestsBase {
                 .when()
                 .redirects().follow(false)
                 .urlEncodingEnabled(false)
-//                .log().all()
                 .get(location)
                 .then()
-//                .log().all()
                 .extract().response()
                 .getBody().htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
 
@@ -183,15 +179,11 @@ public abstract class TestsBase {
                 .formParam("mobileNumber", mobileNo)
                 .formParam("moblang", "et")
                 .formParam("principalCode", idCode)
-//                .queryParam("service", testTaraProperties.getServiceUrl())
-//                .queryParam("client_name", testTaraProperties.getCasClientId())
                 .queryParam("client_id", testTaraProperties.getClientId())
                 .queryParam("redirect_uri", testTaraProperties.getTestRedirectUri())
-//                .log().all()
                 .when()
                 .post(testTaraProperties.getLoginUrl())
                 .then()
-//                .log().all()
                 .extract().response()
                 .htmlPath().getString("**.findAll { it.@name == 'execution' }[0].@value");
 
@@ -201,25 +193,22 @@ public abstract class TestsBase {
                 .filter(cookieFilter)
                 .relaxedHTTPSValidation()
                 .redirects().follow(false)
-//                .log().all()
                 .when()
                 .urlEncodingEnabled(false)
                 .get(location2)
                 .then()
-//                .log().all()
                 .extract().response()
                 .getHeader("location");
 
+        // This is HTTP GET made by the TARA to RelayingParty returnUrl
         String location4 = given()
                 .filter(cookieFilter)
                 .relaxedHTTPSValidation()
-//                .log().all()
                 .when()
                 .redirects().follow(false)
                 .urlEncodingEnabled(false)
                 .get(location3)
                 .then()
-//                .log().all()
                 .extract().response()
                 .getHeader("Location");
         return location4;
