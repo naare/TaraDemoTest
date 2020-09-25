@@ -30,8 +30,8 @@ jobs:
         run: |
           wget -qO- https://raw.githubusercontent.com/ruzickap/action-my-broken-link-checker/v1.0.3/entrypoint.sh | bash
           
-      - name: Check job status. Send email on failure
-        if: ${{ failure() }}
+  #    - name: Check job status. Send email on failure
+    #    if: ${{ failure() }}
        # uses: dawidd6/action-send-mail@v2.2.1
       #  with:
           # SMTP server address
